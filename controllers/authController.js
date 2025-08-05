@@ -1,65 +1,72 @@
+import { db } from "../db.js"
+import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
+import dontenv from "dotenv"
 
+dontenv.config();
 
-
-dontev.config()
 
 export const register = async(req , res ) => {
+const {username, password, rol } = req.body;
 
-const {username, password, role } = req.body;
 
-const hashedPassword  = await bcrypt( password, 10);
 
-try {
-
-    const [rows] = await pool.query(
-     
-     'INSERT INTO users ( username, password, role)  VALUES(?,?,?)',
-     [username, hashedPassword, role || 'user' ]
+    try {
+    const hashed  = await bcrypt.hash( password, 10);
+    await db.query ('INSERT INTO usuarios ( username, password, rol)  VALUES(?,?,?)',[username, hashed, rol])
+    res.json({message: 'Usuario registrado'}
     );
-    res.status(201).json({message: 'Usuario registrado'});
+
+    
+    } catch (error) {
+        console.error("Error en register:", error.message);
+        res.status(500).json({message: 'Error al registrar usuario'});
+    }
+
+     
+
+} 
 
 
-    }  catch (error) {
-        res.status(500).json({error: 'Error al registrar usuiario'})
 
+export const login = async (req, res) => {
+    const {username, password} = req.body;
+       console.log("Datos recibidos:", username, password);
+
+     try {
+            const  [rows] = await db.query('SELECT * FROM usuarios WHERE username = ?', [username]);
+              console.log("Resultado SQL:", rows);
+        
+        if (!rows.length) {
+        return res.status(401).json({messages: 'Usuario no encontrado'});
+        }
+
+        const user = rows [0]; 
+        console.log("Usuario encontrado:", user);
+        const insMatch = await bcrypt.compare(password, user.password);
+
+        if (!insMatch) {
+            return res.status(401).json({message: 'Credenciales invalidas'});
+        
+        }    console.log("Contraseña coincide:", insMatch);
+            
+
+            const token = jwt.sign(
+            {id: rows[0].id, rol: rows[0].rol},
+            process.env.JWT_SECRET,
+            {expiresIn: '1h'});
+            res.json ({token});
+
+    } catch (error) {
+        console.error("Error en login:", error.message);
+        res.status(500).json({message: 'Error al iniciar sesión'});
     }
 
 
 } 
 
-export const login = async (req, res) => {
-    
-    const {username, password} = req.body;
-    
-    try {
-        
-        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-
-        const user = rows[0];  
-        
-        if (!user || !( await bcrypt.compare(password, user.password))){
-        return res.status(401).json({error: 'Credenciales incorrectas'});
-        }
-    
-
-        const toquen = jwt.sign(
-        {id: user.id, username: user.username, role: user.role},
-        process.env.JWT_SECRET,
-        {expiresIn: '1h'}
-        );
-
-        res.json ({token});
 
 
-    } catch (error) {
-        res.status(500).json({error: 'Error al iniciar sesión'});
-    }
-
- } 
-
-export const profile = async (req, res) => {
-    res.json({ user: req.user});
-}
 
 
 

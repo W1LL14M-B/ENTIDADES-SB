@@ -1,13 +1,32 @@
-import expreess from "express";
+import express from "express";
 import dotenv from "dotenv";
-import bodyParser from "body-parser"
+import cors from "cors";
+import solicitudRoutes from "./routes/solicitud.js";
+import empleadosRoutes from "./routes/empleados.js";
+import authRoutes from "./routes/auth.js";
+
+
 
 
 dotenv.config();
-const app = expreess();
-app.use(bodyParser.json())
 
-app.listen(process.env.PORT, () => {
-console.log(`servicio se esta ejecutando en el puerto ${process.env.PORT}`)
+
+const app = express();
+app.use(express.json())
+
+
+app.use(cors({
+  origin: "http://localhost:5173", 
+  credentials: true
+}));    
+
+app.use("/api/auth", authRoutes);
+app.use("/api/empleados", empleadosRoutes);
+app.use("/api/solicitudes", solicitudRoutes);
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+console.log(`servicio se esta ejecutando en el puerto 3000`)
 });
 

@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+
+       context: .
+
+    ports:
+       - "3000:3000"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456
+      DB_NAME: DBENTIDADES
+
+    depends_on:
+        - db
+    volumes:
+       - .:/app
+
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: DBENTIDADES
+    ports:
+        - "3306:3306"
+    volumes:
+        - db-data:/var/lib/mysql
+
+
+volumes:
+    db-data : {}
